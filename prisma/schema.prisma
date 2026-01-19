@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// PG Type (Boys/Girls)
+enum PGType {
+  BOYS
+  GIRLS
+}
+
+// Admin User Model
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // Hashed password
+  name      String
+  role      String   @default("admin") // admin, superadmin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Main PG Model
+model PG {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  type        PGType
+  address     String
+  city        String
+  state       String
+  pincode     String
+  latitude    Float?
+  longitude   Float?
+  featured    Boolean    @default(false)
+  active      Boolean    @default(true)
+  ownerId     String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  images      PGImage[]
+  videos      PGVideo[]
+  rentPlans   RentPlan[]
+  amenities   PGAmenity[]
+  rules       PGRule[]
+  inquiries   Inquiry[]
+
+  // Owner (admin can see this)
+  owner       Owner?     @relation(fields: [ownerId], references: [id])
+}
+
+// Owner details (admin only)
+model Owner {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pgs       PG[]
+}
+
+// PG Images
+model PGImage {
+  id        String   @id @default(cuid())
+  pgId      String
+  url       String
+  caption   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  pg        PG       @relation(fields: [pgId], references: [id], onDelete: Cascade)
+}
+
+// PG Videos
+model PGVideo {
+  id        String   @id @default(cuid())
+  pgId      String
+  url       String
+  thumbnail String?
+  caption   String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  pg        PG       @relation(fields: [pgId], references: [id], onDelete: Cascade)
+}
+
+// Sharing-wise rent plans
+model RentPlan {
+  id          String  @id @default(cuid())
+  pgId        String
+  sharingType String  // e.g., "1 Sharing", "2 Sharing", "3 Sharing"
+  rent        Int     // Monthly rent
+  securityDeposit Int?
+  facilities  String? // Additional info about facilities
+  createdAt   DateTime @default(now())
+
+  pg          PG      @relation(fields: [pgId], references: [id], onDelete: Cascade)
+}
+
+// Amenities
+model PGAmenity {
+  id        String   @id @default(cuid())
+  pgId      String
+  name      String   // e.g., "WiFi", "AC", "Meals", "Laundry"
+  icon      String?  // Icon name for display
+  createdAt DateTime @default(now())
+
+  pg        PG       @relation(fields: [pgId], references: [id], onDelete: Cascade)
+}
+
+// House Rules
+model PGRule {
+  id        String   @id @default(cuid())
+  pgId      String
+  rule      String   // e.g., "No smoking", "Visitors allowed till 9 PM"
+  createdAt DateTime @default(now())
+
+  pg        PG       @relation(fields: [pgId], references: [id], onDelete: Cascade)
+}
+
+// Inquiry (PG-specific or common)
+model Inquiry {
+  id          String   @id @default(cuid())
+  pgId        String?
+  name        String
+  phone       String
+  email       String?
+  message     String?
+  isCommon    Boolean  @default(false) // true = common inquiry, false = PG-specific
+  status      String   @default("pending") // pending, contacted, closed
+  createdAt   DateTime @default(now())
+
+  pg          PG?     @relation(fields: [pgId], references: [id])
+}
+
+// Owner Onboarding Request
+model OwnerOnboarding {
+  id            String   @id @default(cuid())
+  name          String
+  phone         String
+  email         String
+  pgName        String  // Name of the PG
+  pgType        PGType  // Boys/Girls
+  pgAddress     String
+  pgCity        String
+  pgState       String
+  pgPincode     String
+  capacity      Int?    // Number of occupants
+  existingRooms Int?    // Number of existing rooms
+  message       String?
+  status        String   @default("pending") // pending, contacted, completed
+  createdAt     DateTime @default(now())
+}
