@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { PGType } from '@prisma/client'
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,14 +52,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create owner onboarding request
-    const onboarding = await db.ownerOnboarding.create({
-      data: {
+    const apiUrl = `${process.env.API_BASE_URL}/api/owner-onboarding`
+    console.log('Posting to API URL:', apiUrl)
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         name,
         phone,
         email,
         pgName,
-        pgType: pgType as PGType,
+        pgType,
         pgAddress,
         pgCity,
         pgState,
@@ -69,20 +73,20 @@ export async function POST(request: NextRequest) {
         capacity,
         existingRooms,
         message
-      }
+      })
     })
 
-    return NextResponse.json(
-      {
-        message: 'Owner onboarding request submitted successfully',
-        onboarding: {
-          id: onboarding.id,
-          name: onboarding.name,
-          pgName: onboarding.pgName
-        }
-      },
-      { status: 201 }
-    )
+    console.log('API response status:', response.status)
+    if (!response.ok) {
+      const errorData = await response.json()
+      return NextResponse.json(
+        { error: errorData.error || 'Failed to submit onboarding request' },
+        { status: response.status }
+      )
+    }
+
+    const data = await response.json()
+    return NextResponse.json(data, { status: 201 })
   } catch (error) {
     console.error('Error creating owner onboarding:', error)
     return NextResponse.json(

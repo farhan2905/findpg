@@ -1,78 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { PGType } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const type = searchParams.get('type')?.toUpperCase() as PGType | null
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '12')
+    const type = searchParams.get('type')
+    const page = searchParams.get('page') || '1'
+    const limit = searchParams.get('limit') || '12'
     const city = searchParams.get('city')
     const sortBy = searchParams.get('sortBy') || 'createdAt'
 
-    const skip = (page - 1) * limit
+    const params = new URLSearchParams({
+      page,
+      limit,
+      sortBy
+    })
 
-    // Build where clause
-    const where: any = {
-      active: true
-    }
-
-    if (type && (type === 'BOYS' || type === 'GIRLS')) {
-      where.type = type
+    if (type) {
+      params.append('type', type)
     }
 
     if (city) {
-      where.city = {
-        contains: city,
-        mode: 'insensitive'
-      }
+      params.append('city', city)
     }
 
-    // Build orderBy
-    const orderBy: any = {}
-    if (sortBy === 'createdAt') {
-      orderBy.createdAt = 'desc'
-    } else if (sortBy === 'rent') {
-      orderBy.rentPlans = {
-        rent: 'asc'
-      }
-    }
+    const apiUrl = `${process.env.API_BASE_URL}/api/pg/listings?${params.toString()}`
+    console.log('Fetching from API URL:', apiUrl)
 
-    // Fetch PGs with their first image
-    const pgs = await db.pG.findMany({
-      where,
-      include: {
-        images: {
-          orderBy: {
-            order: 'asc'
-          },
-          take: 1
-        },
-        rentPlans: {
-          orderBy: {
-            rent: 'asc'
-          },
-          take: 1
-        }
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      orderBy,
-      skip,
-      take: limit
     })
 
-    // Get total count for pagination
-    const total = await db.pG.count({ where })
+    console.log('API response status:', response.status)
+    if (!response.ok) {
+      throw new Error(`Backend API error: ${response.status}`)
+    }
 
-    return NextResponse.json({
-      pgs,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    })
+    const data = await response.json()
+    return NextResponse.json(data)
   } catch (error) {
     console.error('Error fetching PG listings:', error)
     return NextResponse.json(

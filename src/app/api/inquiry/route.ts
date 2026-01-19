@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,29 +22,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create inquiry
-    const inquiry = await db.inquiry.create({
-      data: {
+    const apiUrl = `${process.env.API_BASE_URL}/api/inquiry`
+    console.log('Posting to API URL:', apiUrl)
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pgId,
         name,
         phone,
         email,
         message,
-        isCommon,
-        pgId: pgId || null
-      }
+        isCommon
+      })
     })
 
-    return NextResponse.json(
-      {
-        message: 'Inquiry submitted successfully',
-        inquiry: {
-          id: inquiry.id,
-          name: inquiry.name,
-          message: inquiry.message
-        }
-      },
-      { status: 201 }
-    )
+    console.log('API response status:', response.status)
+    if (!response.ok) {
+      const errorData = await response.json()
+      return NextResponse.json(
+        { error: errorData.error || 'Failed to submit inquiry' },
+        { status: response.status }
+      )
+    }
+
+    const data = await response.json()
+    return NextResponse.json(data, { status: 201 })
   } catch (error) {
     console.error('Error creating inquiry:', error)
     return NextResponse.json(
