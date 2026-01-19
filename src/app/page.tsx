@@ -448,7 +448,7 @@ export default function FindPGPage() {
                       placeholder="Tell us what you're looking for..."
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={submitting}>
+                  <Button type="submit" className="w-full" disabled={submitting} suppressHydrationWarning={true}>
                     {submitting ? 'Sending...' : 'Submit Inquiry'}
                   </Button>
                 </form>
