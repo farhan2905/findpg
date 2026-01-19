@@ -12,9 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, MapPin, Home, ArrowLeft, Filter, SlidersHorizontal } from 'lucide-react'
 import type { PG, PGType } from '@prisma/client'
 
-export const dynamic = 'force-dynamic'
-
-export default function ListingsPage() {
+function ListingsPage() {
   const searchParams = useSearchParams()
   const typeParam = searchParams.get('type') as PGType | null
 
@@ -294,5 +292,13 @@ export default function ListingsPage() {
         </div>
       </footer>
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ListingsPage />
+    </Suspense>
   )
 }
