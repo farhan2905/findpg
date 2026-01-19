@@ -399,6 +399,7 @@ export default function FindPGPage() {
                       required
                       className="w-full px-3 py-2 border border-input rounded-md bg-background"
                       placeholder="Your full name"
+                      suppressHydrationWarning={true}
                     />
                   </div>
                   <div>
@@ -414,6 +415,7 @@ export default function FindPGPage() {
                       required
                       className="w-full px-3 py-2 border border-input rounded-md bg-background"
                       placeholder="Your phone number"
+                      suppressHydrationWarning={true}
                     />
                   </div>
                   <div>
@@ -428,6 +430,7 @@ export default function FindPGPage() {
                       onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
                       className="w-full px-3 py-2 border border-input rounded-md bg-background"
                       placeholder="Your email address"
+                      suppressHydrationWarning={true}
                     />
                   </div>
                   <div>
